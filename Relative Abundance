@@ -1,5 +1,10 @@
-# Load your packages 
+#Load your packages
 
+library(microbiome)
+library(phyloseq)
+library(ggpubr)
+library(dplyr)
+library(ggplot2)
 
 #BEFORE DECONTAM 
 
