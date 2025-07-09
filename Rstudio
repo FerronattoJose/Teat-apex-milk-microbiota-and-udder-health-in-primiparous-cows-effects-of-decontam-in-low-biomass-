@@ -1,0 +1,31 @@
+#RStudio 
+
+#Reading Data from QIIME 2
+
+#Load the packages 
+library(phyloseq)   # For microbiome analysis
+library(qiime2R)    # To read QIIME 2 files (.qza)
+library(dplyr)      # For data manipulation
+library(tidyverse)  # For general data processing
+
+#Load your data
+SVs <- read_qza("table.qza")
+metadata <- read_q2metadata("metadata.tsv")
+head(metadata) # show top lines of metadata
+
+taxonomy <- read_qza("taxonomy.qza")
+head(taxonomy$data)
+
+#Creating a Phyloseq Object
+physeq <- qza_to_phyloseq(
+  features="table.qza",
+  tree="rooted-tree.qza",
+  taxonomy="taxonomy.qza",
+  metadata = "metadata.tsv"
+)
+physeq
+
+#save the phyloseq object
+saveRDS(physeq, "physeq")
+
+#Extracting Unique Genera
