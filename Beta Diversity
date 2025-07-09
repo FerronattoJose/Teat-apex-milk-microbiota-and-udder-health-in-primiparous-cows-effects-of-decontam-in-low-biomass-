@@ -1,0 +1,95 @@
+#Load your packages
+
+library(microbiome)
+library(phyloseq)
+library(ggpubr)
+library(dplyr)
+library(ggplot2)
+
+
+#BEFORE DECONTAM 
+
+#Load your data
+ps2.rel.BD <- microbiome::transform(phyloseq_before_withoutneg, "compositional")
+
+#UNIFRAC
+wunifrac_dist = phyloseq::distance(ps2.rel.BD, method="unifrac", weighted=FALSE)
+ordination = ordinate(ps2.rel.BD, method="PCoA", distance=wunifrac_dist)
+
+plot_ordination(ps2.rel.BD, ordination, color = "Group", shape = "Group") +
+  labs(title = "Samples_before_UW_Unifrac)", color = "Group", shape = "Group") +
+  geom_text_repel(aes(label = Quarters), size = 3, max.overlaps = 150) +
+  scale_shape_manual(values = c("Milk" = 21, 
+                                "Teat apex" = 24)) +
+  scale_color_manual(values = c("Milk" = "coral",
+                                "Teat apex" = "steelblue")) +
+  stat_ellipse(
+    aes(x = Axis.1, y = Axis.2, group = Group),
+    level =0.95) +
+  theme_classic()
+
+
+PERMANOVA
+adonis2(wunifrac_dist ~ sample_data(ps2.rel.BD)$Group)
+
+#PAIRWISE
+metadata_samples <- rownames(metadata)
+dist_samples <- labels(wunifrac_dist)
+
+# Identify samples in dist_unifrac but NOT in metadata
+extra_in_dist <- setdiff(dist_samples, metadata_samples)
+# Identify samples in metadata but NOT in dist_unifrac
+extra_in_metadata <- setdiff(metadata_samples, dist_samples)
+
+print(extra_in_dist)  # These samples exist in dist_unifrac but not in metadata
+print(extra_in_metadata)  # These samples exist in metadata but not in dist_unifrac
+common_samples <- intersect(metadata_samples, dist_samples)
+
+dist_unifrac <- as.dist(as.matrix(wunifrac_dist)[common_samples, common_samples])
+print(attr(dist_unifrac, "Size"))  # Should now match dim(metadata)[1]
+
+pairwise_results <- pairwise.adonis(dist_unifrac, factors = metadata$Group)
+print(pairwise_results)
+
+
+
+#WEIGHTED
+wunifrac_dist = phyloseq::distance(ps2.rel.BD, method="unifrac", weighted=TRUE)
+ordination = ordinate(ps2.rel.BD, method="PCoA", distance=wunifrac_dist)
+
+plot_ordination(ps2.rel.BD, ordination, color = "Group", shape = "Group") +
+  labs(title = "Samples_before_W_Unifrac)", color = "Group", shape = "Group") +
+  geom_text_repel(aes(label = Quarters), size = 3, max.overlaps = 150) +
+  scale_shape_manual(values = c("Milk" = 21, 
+                                "Teat apex" = 24)) +
+  scale_color_manual(values = c("Milk" = "coral",
+                                "Teat apex" = "steelblue")) +
+  stat_ellipse(
+    aes(x = Axis.1, y = Axis.2, group = Group),
+    level =0.95) +
+  theme_classic()
+
+#PERMANOVA
+adonis2(wunifrac_dist ~ sample_data(ps2.rel.BD)$Group)
+
+
+#PAIRWISE
+metadata_samples <- rownames(metadata)
+dist_samples <- labels(wunifrac_dist)
+
+# Identify samples in dist_unifrac but NOT in metadata
+extra_in_dist <- setdiff(dist_samples, metadata_samples)
+# Identify samples in metadata but NOT in dist_unifrac
+extra_in_metadata <- setdiff(metadata_samples, dist_samples)
+
+print(extra_in_dist)  # These samples exist in dist_unifrac but not in metadata
+print(extra_in_metadata)  # These samples exist in metadata but not in dist_unifrac
+common_samples <- intersect(metadata_samples, dist_samples)
+
+dist_unifrac <- as.dist(as.matrix(wunifrac_dist)[common_samples, common_samples])
+print(attr(dist_unifrac, "Size"))  # Should now match dim(metadata)[1]
+
+pairwise_results <- pairwise.adonis(dist_unifrac, factors = metadata$Group)
+print(pairwise_results)
+
+#AGAIN, YOU CAN CHANGE THE PHYLOSEQ OBJECT AND TEST DIFFERENTS PHYLOSEQ (THRESOLD 0.5, 0.6 AND 0.8). ALSO, YOU CAN CHANGE THE VARIABLE "GROUP" TO "SCC" OR OTHER DATA THAT YOU WOULD LIKE TO EVALUATE.
