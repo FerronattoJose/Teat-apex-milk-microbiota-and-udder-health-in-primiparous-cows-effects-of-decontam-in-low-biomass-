@@ -6,7 +6,7 @@ library(ggpubr)
 library(dplyr)
 library(ggplot2)
 
-#Before decontam
+#BEFORE DECONTAM
 
 reads_sample_physeq <- readcount(phyloseq_before_withoutneg)
 sort(reads_sample_physeq[1:400])
@@ -182,3 +182,5 @@ print(p.chao)
 p.chao <- p.chao + stat_compare_means(comparisons = stat.pairs) 
 
 print(p.chao)
+
+#FOR DIFFERENTS DECONTAM THRESHOLDS (0.5, 0.6, AND 0.8) USE THE SAME CODE, JUST CHANGE THE PHYLOSEQ OBJECT. ALSO, TO COMPARE WITH DIFFERENT METADATA (SCC, MICROBIOLOGICAL CULTURE) JUST CHANGE THE VARIABLE "GROUP" ACCORDING WITH YOU WANT TO ANALYSE.
