@@ -5,6 +5,8 @@ library(decontam)
 library(ggplot2)
 library(writexl)
 
+#DECONTAM - https://benjjneb.github.io/decontam/vignettes/decontam_intro.html
+
 #Prepare the data before decontam
 
 phyloseq_no_beforedecontam <- subset_taxa(phyloseq_no_Unidentified, !is.na(Phylum))
@@ -27,4 +29,182 @@ write.table(t(otu_table(phyloseq_no_beforedecontam)),
 write.table(sample_data(phyloseq_no_beforedecontam),
             "sample_table_ASV_before_Decontam.txt",
             sep="\t", quote = FALSE, col.names=NA)
+
+ps5 <- phyloseq_no_after5
+head(sample_data(ps5))
+df <- as.data.frame(sample_data(ps5)) # Put sample_data into a ggplot-friendly data.frame
+df$LibrarySize <- sample_sums(ps5)
+df <- df[order(df$LibrarySize),]
+df$Index <- seq(nrow(df))
+ggplot(data=df, aes(x=Index, y=LibrarySize, color=Sample_or_control)) + geom_point()
+sample_data(ps5)$is.neg <- sample_data(ps5)$Sample_or_control == "NEG"
+contamdf.prev <- isContaminant(ps5, method="prevalence", neg="is.neg")
+table(contamdf.prev$contaminant)
+
+# FALSE  TRUE 
+#12608    52 
+
+head(which(contamdf.prev$contaminant))
+contamdf.prev05 <- isContaminant(ps5, method="prevalence", neg="is.neg", threshold=0.5)
+table(contamdf.prev05$contaminant)
+
+# FALSE  TRUE 
+#12608    52
+
+ps5.pa <- transform_sample_counts(ps5, function(abund) 1*(abund>0))
+ps5.pa.neg <- prune_samples(sample_data(ps5.pa)$Sample_or_control == "NEG", ps5.pa)
+ps5.pa.pos <- prune_samples(sample_data(ps5.pa)$Sample_or_control == "True_Sample", ps5.pa)
+df.pa <- data.frame(pa.pos=taxa_sums(ps5.pa.pos), pa.neg=taxa_sums(ps5.pa.neg),
+                    contaminant=contamdf.prev$contaminant)
+ggplot(data=df.pa, aes(x=pa.neg, y=pa.pos, color=contaminant)) + geom_point() +
+  xlab("Prevalence (NEG)") + ylab("Prevalence (True_Sample)")
+
+
+# Save as a table 
+
+write_xlsx(contamdf.prev05,"decontamination05_ASV.xlsx", col_names = TRUE,
+           format_headers = TRUE)
+
+write.table(contamdf.prev05, "decontamination_05_.txt", sep="\t",
+            quote = FALSE, col.names=NA)
+
+unique(tax_table(phyloseq_no_after5)[,"ASV_ID"] )
+
+write.table(tax_table(phyloseq_no_after5),
+            "trim_tax_table_ASVID.txt", sep="\t",
+            quote = FALSE, col.names=NA)
+
+write.table(t(otu_table(phyloseq_no_after5)),
+            "trim_seq_table_ASVID.txt", sep="\t",
+            quote = FALSE, col.names=NA)
+
+
+
+
+# DECONTAM (0.6) https://benjjneb.github.io/decontam/vignettes/decontam_intro.html
+
+ps6 <- phyloseq_no_after6
+head(sample_data(ps6))
+df <- as.data.frame(sample_data(ps6)) # Put sample_data into a ggplot-friendly data.frame
+df$LibrarySize <- sample_sums(ps6)
+df <- df[order(df$LibrarySize),]
+df$Index <- seq(nrow(df))
+ggplot(data=df, aes(x=Index, y=LibrarySize, color=Sample_or_control)) + geom_point()
+sample_data(ps6)$is.neg <- sample_data(ps6)$Sample_or_control == "NEG"
+contamdf.prev <- isContaminant(ps6, method="prevalence", neg="is.neg")
+table(contamdf.prev$contaminant)
+
+# FALSE  TRUE 
+#12608    52 
+
+head(which(contamdf.prev$contaminant))
+contamdf.prev06 <- isContaminant(ps6, method="prevalence", neg="is.neg", threshold=0.6)
+table(contamdf.prev06$contaminant)
+
+# FALSE  TRUE 
+#10928    1732
+
+ps6.pa <- transform_sample_counts(ps6, function(abund) 1*(abund>0))
+ps6.pa.neg <- prune_samples(sample_data(ps6.pa)$Sample_or_control == "NEG", ps6.pa)
+ps6.pa.pos <- prune_samples(sample_data(ps6.pa)$Sample_or_control == "True_Sample", ps6.pa)
+df.pa <- data.frame(pa.pos=taxa_sums(ps6.pa.pos), pa.neg=taxa_sums(ps6.pa.neg),
+                    contaminant=contamdf.prev$contaminant)
+ggplot(data=df.pa, aes(x=pa.neg, y=pa.pos, color=contaminant)) + geom_point() +
+  xlab("Prevalence (NEG)") + ylab("Prevalence (True_Sample)")
+
+
+# Save as a table 
+
+write_xlsx(contamdf.prev06,"decontamination06_ASV.xlsx", col_names = TRUE,
+           format_headers = TRUE)
+
+write.table(contamdf.prev06, "decontamination_06_.txt", sep="\t",
+            quote = FALSE, col.names=NA)
+
+unique(tax_table(phyloseq_no_after6)[,"ASV_ID"] )
+
+write.table(tax_table(phyloseq_no_after6),
+            "trim_tax_table6_ASVID.txt", sep="\t",
+            quote = FALSE, col.names=NA)
+
+write.table(t(otu_table(phyloseq_no_after6)),
+            "trim_seq_table6_ASVID.txt", sep="\t",
+            quote = FALSE, col.names=NA)
+
+
+
+
+# DECONTAM (0.8) https://benjjneb.github.io/decontam/vignettes/decontam_intro.html
+
+ps8 <- phyloseq_no_after8
+head(sample_data(ps8))
+df <- as.data.frame(sample_data(ps8)) # Put sample_data into a ggplot-friendly data.frame
+df$LibrarySize <- sample_sums(ps8)
+df <- df[order(df$LibrarySize),]
+df$Index <- seq(nrow(df))
+ggplot(data=df, aes(x=Index, y=LibrarySize, color=Sample_or_control)) + geom_point()
+sample_data(ps8)$is.neg <- sample_data(ps8)$Sample_or_control == "NEG"
+contamdf.prev <- isContaminant(ps8, method="prevalence", neg="is.neg")
+table(contamdf.prev$contaminant)
+
+# FALSE  TRUE 
+#12608    52 
+
+head(which(contamdf.prev$contaminant))
+contamdf.prev08 <- isContaminant(ps8, method="prevalence", neg="is.neg", threshold=0.8)
+table(contamdf.prev08$contaminant)
+
+# FALSE  TRUE 
+#8794    3866
+
+ps8.pa <- transform_sample_counts(ps8, function(abund) 1*(abund>0))
+ps8.pa.neg <- prune_samples(sample_data(ps8.pa)$Sample_or_control == "NEG", ps8.pa)
+ps8.pa.pos <- prune_samples(sample_data(ps8.pa)$Sample_or_control == "True_Sample", ps8.pa)
+df.pa <- data.frame(pa.pos=taxa_sums(ps8.pa.pos), pa.neg=taxa_sums(ps8.pa.neg),
+                    contaminant=contamdf.prev$contaminant)
+ggplot(data=df.pa, aes(x=pa.neg, y=pa.pos, color=contaminant)) + geom_point() +
+  xlab("Prevalence (NEG)") + ylab("Prevalence (True_Sample)")
+
+
+# Save as a table 
+
+write_xlsx(contamdf.prev08,"decontamination08_ASV.xlsx", col_names = TRUE,
+           format_headers = TRUE)
+
+write.table(contamdf.prev08, "decontamination_08_.txt", sep="\t",
+            quote = FALSE, col.names=NA)
+
+unique(tax_table(phyloseq_no_after8)[,"ASV_ID"] )
+
+write.table(tax_table(phyloseq_no_after8),
+            "trim_tax_table8_ASVID.txt", sep="\t",
+            quote = FALSE, col.names=NA)
+
+write.table(t(otu_table(phyloseq_no_after8)),
+            "trim_seq_table8_ASVID.txt", sep="\t",
+            quote = FALSE, col.names=NA)
+
+
+#Remove the contaminants
+# This code allow to remove all contaminants without to use the badtaxa
+
+ps5.cleaned05 <- prune_taxa(!contamdf.prev05$contaminant, ps5)
+phyloseq_after5_withoutneg = subset_samples(ps5.cleaned05, Sample_or_control %in% c("True_Sample"))
+phyloseq_after5_withoutneg
+#12660 12608 removed 52
+
+ps6.cleaned06 <- prune_taxa(!contamdf.prev06$contaminant, ps6)
+phyloseq_after6_withoutneg = subset_samples(ps6.cleaned06, Sample_or_control %in% c("True_Sample"))
+phyloseq_after6_withoutneg
+#12660  10928 removed 1.732
+
+ps8.cleaned08 <- prune_taxa(!contamdf.prev08$contaminant, ps8)
+phyloseq_after8_withoutneg = subset_samples(ps8.cleaned08, Sample_or_control %in% c("True_Sample"))
+phyloseq_after8_withoutneg
+#12660  8794 removed 3.866
+
+# Remove the negative controls - phyloseq before decontam
+
+phyloseq_before_withoutneg = subset_samples(phyloseq_no_beforedecontam, Sample_or_control %in% c("True_Sample"))
+phyloseq_before_withoutneg
 
