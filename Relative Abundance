@@ -1,0 +1,232 @@
+# Load your packages 
+
+
+#BEFORE DECONTAM 
+
+#Load your phyloseq without negative controls. In this case I have teat apex and milk samples, under the "group" column. 
+ps2 <- phyloseq_before_withoutneg 
+
+#If you want to select only one, you can use this code: (ps2_milk <- subset_samples(ps2, Group %in% c("Milk"))
+
+# get relative abudance
+ps2.rel <- microbiome::transform(ps2, "compositional")
+
+
+#ASV
+ps2.ASV.rel <- aggregate_rare(ps2.rel, level = "ASV_ID", detection = 0.01, prevalence = 0.1)
+
+ps2.ASV.rel <- prune_taxa(taxa_sums(ps2.ASV.rel) > (0.01 * sum(taxa_sums(ps2.ASV.rel))), ps2.ASV.rel)
+
+ps2.ASV.rel <- transform_sample_counts(ps2.ASV.rel, function(x) x / sum(x))
+
+table(taxa_sums(ps2.ASV.rel) > (0.01 * sum(taxa_sums(ps2.ASV.rel)))) 
+
+                                       
+#PHYLUM
+ps2.phy.rel <- aggregate_rare(ps2.rel, level = "Phylum", detection = 0.05, prevalence = 0.1)
+
+table(taxa_sums(ps2.phy.rel) > (0.01 * sum(taxa_sums(ps2.phy.rel))))
+                                       
+                                       
+#FAMILY
+ps2.fam.rel <- aggregate_rare(ps2.rel, level = "Family", detection = 0.05, prevalence = 0.1)
+
+table(taxa_sums(ps2.fam.rel) > (0.01 * sum(taxa_sums(ps2.fam.rel)))) 
+                                       
+                                       
+#GENUS
+ps2.gen.rel <- aggregate_rare(ps2.rel, level = "Genus", detection = 0.05, prevalence = 0.1)
+
+table(taxa_sums(ps2.gen.rel) > (0.01 * sum(taxa_sums(ps2.gen.rel))))
+                                       
+
+#You can use a different palletes.
+                                       
+colorsASV <- c("ASV11236" = "#2A363BFF",
+               "ASV12563" = "#8C2B3DFF",
+               "ASV12622" = "#5DC863FF",
+               "ASV12624" = "#D2691E",
+               "ASV12629" = "#7B68EE",
+               "ASV13398" = "#FFB6C1",
+               "ASV13487" = "#CD5C5C",
+               "ASV13498" = "#FECEA8FF",
+               "ASV13598" = "#E84A5FFF",
+               "ASV13613" = "#FF847CFF",
+               "ASV13626" = "#9F6E71FF",
+               "ASV13629" = "#32CD32",
+               "ASV13642" = "#019875FF",
+               "ASV13660" = "#00FFFF",
+               "ASV13663" = "#21908CFF",
+               "ASV13664" = "#FFD700",
+               "ASV13672" = "#ABCCBEFF",
+               "ASV13673" = "#99B898FF",
+               "ASV13745" = "#BA55D3",
+               "ASV14223" = "#749E89FF",
+               "ASV14551" = "#FF4500",
+               "ASV15722" = "#E3E418FF",
+               "ASV15730" = "#20A486FF",
+               "ASV15738" = "#FF6347",
+               "ASV16689" = "#00FA9A",
+               "ASV7251" = "#FF5733",
+               "ASV7305" = "#481F70FF",
+               "ASV7578" = "#191970",
+               "ASV7589" = "#DA70D6",
+               "ASV7600" = "#F08080",
+               "ASV7603" = "#C71585",
+               "ASV8035" = "#365D8DFF",
+               "ASV9340" = "#C399A2FF",
+               "ASV9355" = "#4E6D58FF",
+               "ASV9386" = "#75D054FF",
+               "ASV9412" = "#35B779FF",
+               "ASV9785" = "#7D87B2FF",
+               "ASV9986" = "#C2CAE3FF",
+               "Other" = "#41507BFF",
+               "ASV13243" = "#1E90FF",
+               "ASV13235" = "#33FF57")
+
+
+colorsph <- c("Actinobacteriota" = "#2A363BFF",
+              "Firmicutes" = "#99B898FF",
+              "Bacteroidota" = "#019875FF",
+              "Proteobacteria" = "#FF847CFF", 
+              "Other" = "#FECEA8FF")
+
+
+colorsfa <- c("Bacillaceae" = "#2A363BFF",
+              "Other" = "#FECEA8FF",
+              "Propionibacteriaceae" = "#E3CACFFF",
+              "Pseudomonadaceae" = "#FF847CFF",
+              "Staphylococcaceae" = "#9F6E71FF",
+              "Unknown" = "#41507BFF",
+              "Moraxellaceae" = "#ABCCBEFF",
+              "Comamonadaceae" = "#749E89FF",
+              "Oscillospiraceae" = "#C399A2FF",
+              "Planococcaceae" = "#4E6D58FF",
+              "Enterobacteriaceae" = "#7D87B2FF",
+              "Lachnospiraceae" = "#27AD81FF",
+              "Intrasporangiaceae" = "#365D8DFF",
+              "Aerococcaceae" = "#019875FF") 
+
+
+colorsge <- c("Bacillus" = "#2A363BFF",
+              "Cutibacterium" = "#749E89FF",
+              "Other" = "#FECEA8FF",
+              "Pseudomonas" = "#FF847CFF",
+              "Staphylococcus" = "#9F6E71FF",
+              "Unknown" = "#41507BFF",
+              "Macrococcus" = "#27AD81FF",
+              "Acinetobacter" = "#ABCCBEFF",
+              "UCG-005" = "#7D87B2FF",
+              "Solibacillus" = "#8FD744FF")
+
+
+
+#ASV 
+                                       
+ps2.ASV.rel.sorted <- ps2.ASV.rel %>%
+  tax_sort(
+    by = sum, 
+    at = "ASV_ID",
+    descending = TRUE  # Sort from most to least abundant
+  )
+
+                                       
+#You can change the variable like here and look for the quarters, or as the next ones, where I looked at Group.
+                                       
+p_avg_ASV <- plot_composition(ps2.ASV.rel.sorted, average_by = "Quarters") + 
+  guides(fill = guide_legend(ncol = 1)) + 
+  labs(x = "Quarters", 
+       y = "Relative abundance",
+       title = "Milk before") +
+  scale_fill_manual("ASV-ID", values = rev(colorsASV)) +  
+  scale_x_discrete(limits = c("1FR", "1FL", "1HR", "1HL",
+                              "2FR", "2FL", "2HR", "2HL",
+                              "3FR", "3FL", "3HR",
+                              "4FR", "4FL", "4HR", "4HL",
+                              "6FR", "6FL", "6HR", "6HL",
+                              "7FR", "7FL", "7HR", "7HL",
+                              "8FR", "8FL", "8HR", "8HL",
+                              "9FR", "9FL", "9HR", "9HL",
+                              "11FR", "11FL", "11HR", "11HL",
+                              "12FR", "12FL", "12HR", "12HL")) + 
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+
+p_avg_ASV 
+
+
+
+#PHYLUM
+                                       
+ps2.phy.rel.sorted <- ps2.phy.rel %>%
+  tax_sort(
+    by = sum, 
+    at = "Phylum",
+    descending = TRUE  # Sort from most to least abundant
+  ) 
+
+
+
+p_avg_phy <- plot_composition(ps2.phy.rel.sorted,
+                              average_by = "Group") + 
+  guides(fill = guide_legend(ncol = 1)) + 
+  labs(x = "Group", 
+       y = "Relative abundance",
+       title = "Phylum Before") +
+  scale_fill_manual("Phylum", values = colorsph, guide = guide_legend(reverse = TRUE))  +
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+p_avg_phy
+
+
+
+#FAMILY
+                                       
+ps2.fam.rel.sorted <- ps2.fam.rel %>%
+  tax_sort(
+    by = sum, 
+    at = "Family",
+    descending = TRUE  # Sort from most to least abundant
+  )
+
+
+p_avg_fam <- plot_composition(ps2.fam.rel.sorted,
+                              average_by = "Group") + 
+  guides(fill = guide_legend(ncol = 1)) + 
+  labs(x = "Group", 
+       y = "Relative abundance",
+       title = "Family before") +
+  scale_fill_manual("Family", values = colorsfa) +
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+p_avg_fam
+
+
+#GENUS
+                                       
+ps2.gen.rel.sorted <- ps2.gen.rel %>%
+  tax_sort(
+    by = sum, 
+    at = "Genus",
+    descending = TRUE  # Sort from most to least abundant
+  )
+
+
+
+p_avg_gen <- plot_composition(ps2.gen.rel.sorted,
+                              average_by = "Group") + 
+  guides(fill = guide_legend(ncol = 1)) + 
+  labs(x = "Group", 
+       y = "Relative abundance",
+       title = "Genus before") +
+  scale_fill_manual("Genus", values = colorsge, guide = guide_legend(reverse = FALSE)) + 
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+p_avg_gen
+
+
+#AGAIN, TO EVALUATE DIFFERENTS THRESOLDS YOU JUST NEED TO CHANGE THE PHYLOSEQ OBJECT AND APPLY THE SAME CODES.
