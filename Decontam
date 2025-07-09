@@ -1,0 +1,30 @@
+#Load your packages
+
+library(phyloseq)
+library(decontam)
+library(ggplot2)
+library(writexl)
+
+#Prepare the data before decontam
+
+phyloseq_no_beforedecontam <- subset_taxa(phyloseq_no_Unidentified, !is.na(Phylum))
+phyloseq_no_beforedecontam
+
+
+tax_table(phyloseq_no_beforedecontam)[tax_table(phyloseq_no_beforedecontam) == "d__Bacteria"] <- "Bacteria"
+phyloseq::tax_table(phyloseq_no_beforedecontam)[1:3,1:3]
+unique(tax_table(phyloseq_no_beforedecontam)[,"ASV_ID"] )
+
+
+write.table(tax_table(phyloseq_no_beforedecontam),
+            "trim_tax_table_ASV_before_Decontam.txt", sep="\t",
+            quote = FALSE, col.names=NA)
+
+write.table(t(otu_table(phyloseq_no_beforedecontam)),
+            "trim_seq_table_ASV_before_Decontam.txt", sep="\t",
+            quote = FALSE, col.names=NA)
+
+write.table(sample_data(phyloseq_no_beforedecontam),
+            "sample_table_ASV_before_Decontam.txt",
+            sep="\t", quote = FALSE, col.names=NA)
+
