@@ -1,0 +1,116 @@
+# Load necessary libraries
+
+  library(phyloseq)
+  library(vegan)
+  library(reshape2)
+  library(dendextend)
+  library(ggplot2)
+  library(ggdendro)
+  
+  # 1. Aggregate data at Genus level
+  ps_genus <- tax_glom(ps2.gen.rel, taxrank = "Genus")
+  
+  # 2. Transform to relative abundance
+  ps_genus_rel <- transform_sample_counts(ps_genus, function(x) x / sum(x))
+  
+  # 3. Extract data as a data frame
+  genus_abundance <- psmelt(ps_genus_rel)
+  
+  # 4. Convert to wide format for clustering
+  genus_wide <- dcast(genus_abundance, Sample ~ Genus, value.var = "Abundance", fun.aggregate = sum)
+  rownames(genus_wide) <- genus_wide$Sample
+  genus_wide$Sample <- NULL
+  
+  # 5. Compute Bray-Curtis distance matrix
+  dist_matrix <- vegdist(genus_wide, method = "bray")
+  
+  # 6. Perform hierarchical clustering
+  hclust_res <- hclust(dist_matrix, method = "average")  # Use "complete" or "ward.D2" if needed
+  
+  # 7. Retrieve metadata and quarter information
+  metadata <- sample_data(ps2.gen.rel)
+  group_colors <- metadata$Quarter  # Adjust based on the actual column name in your metadata
+  
+  # 8. Plot dendrogram with quarter-based colors
+  dend <- as.dendrogram(hclust_res)
+  dend <- color_labels(dend, k = length(unique(group_colors)), col = as.factor(group_colors))
+  
+  # Ensure group_colors is a named vector with valid colors
+  metadata <- sample_data(ps2.ASV.rel)
+  group_colors <- as.character(metadata$Quarter)  # Ensure it's a character vector
+  
+  # Assign colors (modify if needed)
+  unique_groups <- unique(group_colors)
+  color_palette <- rainbow(length(unique_groups))  # Assign distinct colors
+  names(color_palette) <- unique_groups
+  group_colors <- color_palette[group_colors]  # Map colors to samples
+  
+  # Convert to dendrogram
+  dend <- as.dendrogram(hclust_res)
+  
+  # Apply a single dark color to all labels
+  dend <- color_labels(dend, col = "black")  # Change to "darkgray" or any other dark shade if needed
+  
+  # Plot the dendrogram
+  plot(dend, main = "Hierarchical Clustering of Genus Abundances", xlab = "Quarters", sub = "")
+
+  
+  
+  
+  
+  # Step 1: Perform hierarchical clustering on your genus data
+  dist_matrix <- dist(genus_wide)  # Calculate distance matrix
+  hclust_result <- hclust(dist_matrix)  # Perform hierarchical clustering
+  
+  # Step 2: Create a dendrogram plot and add genus labels
+  ggdendrogram(hclust_result, rotate = TRUE, size = 4) +
+    theme_minimal() +
+    labs(title = "Hierarchical Clustering of Genera by Quarter",
+         x = "Samples (Quarters)", y = "Height") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))  
+
+
+  # Step 1: Calculate the distance matrix and perform hierarchical clustering
+  dist_matrix <- dist(genus_wide)  # Calculate distance matrix
+  hclust_result <- hclust(dist_matrix)  # Perform hierarchical clustering
+  
+  # Step 2: Create the genus names (or most abundant genus) for each sample
+  # Assuming you want the most abundant genus for each sample in genus_wide
+  most_abundant_genus <- apply(genus_wide, 1, function(x) colnames(genus_wide)[which.max(x)])
+  
+  # Step 3: Create a vector of genus names that corresponds to the order of the samples
+  sample_genus_info <- most_abundant_genus
+  
+  # Step 4: Create a dendrogram data object
+  dendro_data <- dendro_data(hclust_result)
+  
+  # Step 5: Add genus names to the labels in dendrogram data
+  # The order of the labels in dendro_data$labels corresponds to the leaf nodes in the dendrogram
+  # So we can directly assign genus names to these labels
+  dendro_data$labels$genus_names <- sample_genus_info
+
+
+  ggplot(dendro_data$segments, aes(x = x, y = y, xend = xend, yend = yend)) +
+    geom_segment() +  
+    geom_text(data = dendro_data$labels, aes(x = x, y = y, label = genus_names),
+              vjust = -0.5, size = 3) +  
+    theme_minimal() +
+    labs(title = "Hierarchical Clustering of Genera by Quarter",
+         x = "Samples (Quarters)", y = "Height") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
+  
+  
+
+  ggplot() +
+    geom_segment(data = dendro_data$segments, aes(x = x, y = y, xend = xend, yend = yend)) +  
+    geom_text(data = dendro_data$labels, aes(x = x, y = y + 0.5, label = genus_names), 
+              vjust = -0.5, size = 3, color = "blue", angle = 90, hjust = 0.5) +  
+    geom_text(data = dendro_data$labels, aes(x = x, y = y, label = label),
+              vjust = 1.5, size = 3, color = "red", angle = 0, hjust = 0.5) +  
+    theme_minimal() +
+    labs(title = "Hierarchical Clustering of Genera by Quarter",
+         x = "Samples (Quarters)", y = "Height") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1),
+          axis.text.y = element_blank(), axis.title.y = element_blank()) 
+  
+  #YOU CAN APPLY FOR OTHERS PHYLOSEQ OBJECTS AND/OR VARIABLES.
