@@ -1,0 +1,184 @@
+#Load your packages
+
+library(microbiome)
+library(phyloseq)
+library(ggpubr)
+library(dplyr)
+library(ggplot2)
+
+#Before decontam
+
+reads_sample_physeq <- readcount(phyloseq_before_withoutneg)
+sort(reads_sample_physeq[1:400])
+ps1 <- phyloseq_before_withoutneg
+
+
+tab <- microbiome::alpha(ps1, index = c("Chao1", "Shannon", "Observed"))
+ps1.meta <- meta(ps1)
+ps1.meta$Shannon <- tab$diversity_shannon
+ps1.meta$chao1 <- tab$chao1
+ps1.meta$Observed <- tab$observed
+evenness <- microbiome::evenness(ps1)
+
+
+# Evenness index
+
+# Convert to data frame and add SampleID
+evenness_df <- data.frame(SampleID = rownames(evenness), Evenness = evenness$pielou)
+
+# Merge with metadata (assuming ps1 has sample metadata)
+metadata <- data.frame(sample_data(ps1))  # Extract metadata
+evenness_df <- merge(evenness_df, metadata, by.x = "SampleID", by.y = "row.names")
+
+# Check column names in metadata to find the grouping variable
+colnames(evenness_df)  # Identify the correct column for "Group"
+
+# Plot Evenness grouped by a metadata variable (replace 'Group' with actual column name)
+
+ggplot(evenness_df, aes(x = Group, y = Evenness, fill = Group)) +
+  geom_violin(trim = FALSE, alpha = 0.6) +
+  geom_jitter(aes(shape = Group), width = 0.2, alpha = 0.5, color = "black", size = 2) +
+  stat_summary(fun = mean, geom = "crossbar", width = 0.6, 
+               color = "black", fatten = 2, size = 0.5) +
+  scale_fill_manual(values = c("Milk" = "coral", "Teat apex" = "steelblue")) +
+  scale_shape_manual(values = c("Milk" = 21, "Teat apex" = 24)) +
+  labs(title = NULL, x = NULL, y = "Evenness (Pielou's Index)") +
+  ylim(0, 1) +
+  theme_minimal() +
+  theme(
+    panel.background = element_blank(),
+    plot.background = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(color = "black", fill = NA, size = 1),
+    axis.title.x = element_blank(),
+    plot.title = element_blank(),
+    legend.position = "right"
+  )
+
+
+
+
+
+# Observed index
+
+# Convert to a data frame
+diversity_metrics <- data.frame(SampleID = rownames(tab),
+                                Observed_ASVs = tab$observed)
+
+# Merge with metadata (if needed)
+ps1.meta <- data.frame(sample_data(ps1))  # Extract metadata
+diversity_metrics <- merge(diversity_metrics, ps1.meta, by.x = "SampleID", by.y = "row.names")
+
+diversity_metrics$Group <- as.factor(diversity_metrics$Group)
+
+# Boxplot for Observed ASVs grouped by Group
+
+ggplot(diversity_metrics, aes(x = Group, y = Observed_ASVs, fill = Group)) +
+  geom_violin(trim = FALSE, alpha = 0.6) +
+  geom_jitter(aes(shape = Group), width = 0.2, alpha = 0.5, color = "black", size = 2) +
+  stat_summary(fun = mean, geom = "crossbar", width = 0.6, 
+               color = "black", fatten = 2) +
+  scale_fill_manual(values = c("Milk" = "coral", "Teat apex" = "steelblue")) +
+  scale_shape_manual(values = c("Milk" = 21, "Teat apex" = 24)) +
+  labs(
+    title = NULL,           
+    y = "Observed ASVs",
+    x = NULL                
+  ) +
+  theme_minimal() +
+  theme(
+    panel.background = element_blank(),
+    plot.background = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(color = "black", fill = NA, size = 1),
+    axis.title.x = element_blank(),
+    plot.title = element_blank(),
+    legend.position = "right"
+  )
+
+
+
+
+
+# Shannon index
+
+p.shannon <- boxplot_alpha(ps1, 
+                           index = "shannon",
+                           x_var = "Group",
+                           na.rm = TRUE)
+
+
+p.shannon <- ggplot(ps1.meta, aes(x = Group, y = Shannon, fill = Group)) +
+  geom_boxplot(alpha = 0.6, outlier.shape = NA) +
+  geom_jitter(aes(shape = Group), width = 0.2, alpha = 0.5, color = "black", size = 2) +
+  scale_fill_manual(values = c("Milk" = "coral", "Teat apex" = "steelblue")) +
+  scale_shape_manual(values = c("Milk" = 21, "Teat apex" = 21)) +
+  labs(x = "Group", y = "Shannon diversity") +
+  theme_minimal() +
+  theme(
+    panel.background = element_blank(),
+    plot.background = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+    axis.text = element_text(size = 12),
+    axis.title = element_text(size = 16),
+    legend.text = element_text(size = 12),
+    legend.title = element_text(size = 16)
+  )
+
+p.shannon
+
+
+stat <- levels(ps1.meta$Group)
+stat.pairs <- combn(seq_along(stat), 2, simplify = FALSE, FUN = function(i)stat[i])
+print(stat.pairs)
+
+p.shannon <- p.shannon + 
+  stat_compare_means(
+    comparisons = stat.pairs,
+    size = 4,
+    label = "p.format",
+    parse = TRUE  
+  )
+
+print(p.shannon)
+
+
+
+
+# Chao index
+p.chao <- boxplot_alpha(ps1, 
+                        index = "chao1",
+                        x_var = "Group",
+                        na.rm = TRUE)
+p.chao
+
+
+
+p.chao <- ggplot(ps1.meta, aes(x = Group, y = chao1, fill = Group)) +
+  geom_boxplot(alpha = 0.6, outlier.shape = NA) +
+  geom_jitter(aes(shape = Group), width = 0.2, alpha = 0.5, color = "black", size = 2) +
+  scale_fill_manual(values = c("Milk" = "coral", "Teat apex" = "steelblue")) +
+  scale_shape_manual(values = c("Milk" = 21, "Teat apex" = 21)) +
+  labs(x = "Group", y = "Chao1 diversity") +
+  theme_minimal() +
+  theme(
+    panel.background = element_blank(),
+    plot.background = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+    axis.text = element_text(size = 12),
+    axis.title = element_text(size = 16),
+    legend.text = element_text(size = 12),
+    legend.title = element_text(size = 16)
+  )
+
+
+print(p.chao)
+p.chao <- p.chao + stat_compare_means(comparisons = stat.pairs) 
+
+print(p.chao)
