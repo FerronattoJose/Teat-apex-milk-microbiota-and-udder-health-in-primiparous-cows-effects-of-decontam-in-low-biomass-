@@ -7,7 +7,7 @@ library(writexl)
 
 #DECONTAM - https://benjjneb.github.io/decontam/vignettes/decontam_intro.html
 
-#Prepare the data before decontam
+#PREPARE YOUR DATA BEFORE DECONTAM (You will use to compare further)
 
 phyloseq_no_beforedecontam <- subset_taxa(phyloseq_no_Unidentified, !is.na(Phylum))
 phyloseq_no_beforedecontam
@@ -29,6 +29,10 @@ write.table(t(otu_table(phyloseq_no_beforedecontam)),
 write.table(sample_data(phyloseq_no_beforedecontam),
             "sample_table_ASV_before_Decontam.txt",
             sep="\t", quote = FALSE, col.names=NA)
+
+
+
+#DECONTAMINATION PROCEDURE (THRESHOULD 0.5)
 
 ps5 <- phyloseq_no_after5
 head(sample_data(ps5))
@@ -81,7 +85,7 @@ write.table(t(otu_table(phyloseq_no_after5)),
 
 
 
-# DECONTAM (0.6) https://benjjneb.github.io/decontam/vignettes/decontam_intro.html
+#DECONTAMINATION PROCEDURE (THRESHOULD 0.6)
 
 ps6 <- phyloseq_no_after6
 head(sample_data(ps6))
@@ -134,7 +138,7 @@ write.table(t(otu_table(phyloseq_no_after6)),
 
 
 
-# DECONTAM (0.8) https://benjjneb.github.io/decontam/vignettes/decontam_intro.html
+#DECONTAMINATION PROCEDURE (THRESHOULD 0.8)
 
 ps8 <- phyloseq_no_after8
 head(sample_data(ps8))
@@ -185,8 +189,7 @@ write.table(t(otu_table(phyloseq_no_after8)),
             quote = FALSE, col.names=NA)
 
 
-#Remove the contaminants
-# This code allow to remove all contaminants without to use the badtaxa
+#REMOVE THE CONTAMINANTS
 
 ps5.cleaned05 <- prune_taxa(!contamdf.prev05$contaminant, ps5)
 phyloseq_after5_withoutneg = subset_samples(ps5.cleaned05, Sample_or_control %in% c("True_Sample"))
@@ -203,7 +206,7 @@ phyloseq_after8_withoutneg = subset_samples(ps8.cleaned08, Sample_or_control %in
 phyloseq_after8_withoutneg
 #12660  8794 removed 3.866
 
-# Remove the negative controls - phyloseq before decontam
+# REMOVE THE NEGATIVE CONTROLS IN YOUR PHYLOSEQ (BEFORE DECONTAM)
 
 phyloseq_before_withoutneg = subset_samples(phyloseq_no_beforedecontam, Sample_or_control %in% c("True_Sample"))
 phyloseq_before_withoutneg
